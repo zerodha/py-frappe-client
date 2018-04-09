@@ -6,7 +6,7 @@
 ### Initialize
 ```
 from frappe_client import FrappeRequest
-client = FrappeRequest(url="http://localhost:8002", username="user", password="password", callback=store_session_data)
+client = FrappeRequest(url="http://localhost:8002", username="user", password="password", session_data=None, callback=store_session_data)
 
 # Example Callback function
  def store_session_data(data):
@@ -35,6 +35,17 @@ client.session_data
 # 'system_user': 'yes',
 # 'user_id': 'Administrator',
 # 'user_image': ''}
+```
+
+### Storing Session Data
+```
+session_data is a dict which is returned by `client.session_data` field. Session Data needs to be 
+stored locally on the client's end (database/redis/file/etc).
+
+On further initializations of the FrappeRequest() class, you should pass `session_data` field.
+If `session_data` field is passed, all further API calls will use the same session.
+
+Make sure to store and use `session_data` in order to prevent multiple login calls
 ```
 
 ### Get Endpoint call
