@@ -112,11 +112,11 @@ class FrappeRequest(object):
             response (<requests.Response>): Response object received from the Frappe server
 
         """
-        response = self.frappe_session.post(self.url +"/api/method/" + method + "/", params=params)
+        response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=params)
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params)
+                response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=params)
 
         return response
