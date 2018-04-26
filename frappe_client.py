@@ -99,7 +99,7 @@ class FrappeRequest(object):
 
         return response
 
-    def post(self, method, params=None):
+    def post(self, method, data=None):
         """
         Wrapper around POST API requests. Handles the 1st 403 response
         internally
@@ -112,11 +112,11 @@ class FrappeRequest(object):
             response (<requests.Response>): Response object received from the Frappe server
 
         """
-        response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=params)
+        response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=data)
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=params)
+                response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=data)
 
         return response
