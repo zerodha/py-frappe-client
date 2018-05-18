@@ -70,7 +70,7 @@ to prevent multiple sessions for the same user.
 If `session_data` field is passed, all further API calls will use the same session.
 
 
-### Get Endpoint call
+### Invoke GET Endpoint
 
 `client.get(method, params)`
 
@@ -82,7 +82,7 @@ If `session_data` field is passed, all further API calls will use the same sessi
 ```
 
 
-### POST Endpoint call
+### Invoke POST Endpoint
 
 `client.post(method, data)`
 
