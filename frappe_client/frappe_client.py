@@ -1,5 +1,5 @@
 import requests
-from frappe_exceptions import GeneralException, TokenException
+from .frappe_exceptions import GeneralException, TokenException
 
 
 class FrappeRequest(object):
@@ -8,7 +8,7 @@ class FrappeRequest(object):
     Attributes:
             url: URL of Frappe site.
             usr (str): Username to Frappe Login.
-            pwd (str): Password to Frappe Login. 
+            pwd (str): Password to Frappe Login.
             session_data (dict): dict of session object cookie data.
             frappe_session (<requests.Session()>): Object representation
             callback (func): Callback function to handle session data
@@ -27,11 +27,11 @@ class FrappeRequest(object):
         self.session_data = None
         self.callback = callback
 
-        # If user provides `session_data` don't login again, 
+        # If user provides `session_data` don't login again,
         # instead set the cookie data in requests.Session() object
         if session_data:
             self.session_data = session_data
-            self.set_session_token(session_data) 
+            self.set_session_token(session_data)
         else:
             login_response = self._login()
             self.session_data =  self._get_cookie_data(login_response)
@@ -49,19 +49,19 @@ class FrappeRequest(object):
         """
         login_response = self.frappe_session.post(
             self.url, data={'cmd':'login','usr':self.usr, 'pwd':self.pwd})
-        
+
         if login_response.status_code == 403:
             raise GeneralException("Invalid Session")
         if login_response.status_code !=200:
             raise GeneralException("An error with frappe response occurred")
-        # If user provides a callback function, call the function with the 
+        # If user provides a callback function, call the function with the
         # session data
         if self.callback:
             session_data = self._get_cookie_data(login_response)
             self.callback(session_data)
         return login_response
 
-    
+
     def set_session_token(self, session_data):
         """
         Creates a <ResponseCookieJar> object from a dict
