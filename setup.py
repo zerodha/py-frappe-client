@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-from codecs import open
+from codecs import open as codecs_open
 
 
 try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
 except (IOError, ImportError):
-    long_description = open('README.rst', encoding="utf8").read()
+    long_description = codecs_open('README.rst', encoding="utf8").read()
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
