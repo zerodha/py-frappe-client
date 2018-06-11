@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+from codecs import open
+
 
 try:
     import pypandoc
@@ -12,7 +14,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 
-version = '1.0.0'
+version = '1.0.1'
 
 setup(
     name='py-frappe-client',
