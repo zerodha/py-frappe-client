@@ -14,7 +14,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 
-version = '1.0.1'
+version = '1.0.2'
 
 setup(
     name='py-frappe-client',
