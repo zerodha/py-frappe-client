@@ -40,6 +40,15 @@ class FrappeRequest(object):
     def _get_cookie_data(self, response):
         return response.cookies.get_dict()
 
+
+    def _process_response(self, response):
+        try:
+            rjson = response.json()
+        except ValueError:
+            raise GeneralException("Unable to process non JSON response")
+        return rjson
+
+
     def _login(self):
         """
         Internal call to POST login data to Frappe.
@@ -97,7 +106,8 @@ class FrappeRequest(object):
             if login_response.status_code == 200:
                 response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params)
 
-        return response
+        processed_response = self._process_response(response)
+        return processed_response
 
     def post(self, method, data=None):
         """
@@ -119,4 +129,5 @@ class FrappeRequest(object):
             if login_response.status_code == 200:
                 response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=data)
 
-        return response
+        processed_response = self._process_response(response)
+        return processed_response
