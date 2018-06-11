@@ -1,4 +1,7 @@
+import json
+
 import requests
+
 from .frappe_exceptions import GeneralException, TokenException
 
 
@@ -128,6 +131,47 @@ class FrappeRequest(object):
             login_response = self._login()
             if login_response.status_code == 200:
                 response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=data)
+
+        processed_response = self._process_response(response)
+        return processed_response
+
+    def get_doc(
+            self, doctype, name="", filters=None,
+            fields=None, limit_page_length=None, limit_start=None, order_by=None
+    ):
+        """
+        Wrapper around GET API for fetching doctype data.
+
+        Args:
+            doctype (str): Doctype name
+            name (str): Doctype record name identifier
+            filters (dict): Dict containing filters
+            fields (list): Fields to return from the doctype
+            limit_page_length (int): Interger indicating the page length limit
+            limit_start (int): Integer indicating the page start
+            order_by (str): String indicating to order results by
+
+        Returns:
+            response (<requests.Response>): Response object received from the Frappe server
+        """
+        params = {}
+        if filters:
+            params["filters"] = json.dumps(filters)
+        if fields:
+            params["fields"] = json.dumps(fields)
+        if limit_start:
+            params["limit_start"] = str(limit_start)
+        if limit_page_length:
+            params["limit_page_length"] = str(limit_page_length)
+        if order_by:
+            params["order_by"] = order_by
+
+        response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params)
+        if response.status_code == 403:
+            # For the 1st 403 response try logging again
+            login_response = self._login()
+            if login_response.status_code == 200:
+                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params)
 
         processed_response = self._process_response(response)
         return processed_response
