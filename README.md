@@ -1,5 +1,10 @@
 # Py-Frappe-Client
 
+## Install
+
+```
+pip install py-frappe-client
+```
 
 ## Usage
 
