@@ -112,25 +112,30 @@ class FrappeRequest(object):
         processed_response = self._process_response(response)
         return processed_response
 
-    def post(self, method, data=None):
+    def post(self, method, data=None, json=None):
         """
         Wrapper around POST API requests. Handles the 1st 403 response
         internally
 
         Args:
             method (str): Endpoint to call
-            params (dict): Dict representation of additional data to call
+            data (dict): Dict representation of additional data to send in request
+            json (json): Json representation of additional data to send in request
 
         Returns:
             response (<requests.Response>): Response object received from the Frappe server
 
         """
-        response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=data)
+        response = self.frappe_session.post(
+            self.url +"/api/method/" + method + "/", data=data, json=json,
+        )
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.post(self.url +"/api/method/" + method + "/", data=data)
+                response = self.frappe_session.post(
+                    self.url +"/api/method/" + method + "/", data=data, json=json,
+                )
 
         processed_response = self._process_response(response)
         return processed_response
