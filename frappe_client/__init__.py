@@ -1,1 +1,1 @@
-from .frappe_client import FrappeRequest
+from .frappe_client import FrappeRequest  # noqa
