@@ -17,7 +17,7 @@ class FrappeRequest(object):
             callback (func): Callback function to handle session data
     """
 
-    def __init__(self, url, username, password, session_data=None, callback=None):
+    def __init__(self, url, username, password, session_data=None, callback=None, headers=None):
         """
 
         Returns:
@@ -29,6 +29,7 @@ class FrappeRequest(object):
         self.pwd = password
         self.session_data = None
         self.callback = callback
+        self.headers = headers
 
         # If user provides `session_data` don't login again,
         # instead set the cookie data in requests.Session() object
@@ -60,7 +61,7 @@ class FrappeRequest(object):
             login_response: <Requests> object
         """
         login_response = self.frappe_session.post(
-            self.url, data={'cmd':'login','usr':self.usr, 'pwd':self.pwd})
+            self.url, data={'cmd':'login','usr':self.usr, 'pwd':self.pwd}, headers=self.headers)
 
         if login_response.status_code == 403:
             raise GeneralException("Invalid Session")
@@ -89,7 +90,7 @@ class FrappeRequest(object):
         self.frappe_session.cookies = cookiejar
 
 
-    def get(self, method, params=None):
+    def get(self, method, params=None, headers=None):
         """
         Wrapper around GET API requests. Handles the 1st 403 response
         internally
@@ -102,17 +103,20 @@ class FrappeRequest(object):
             response (<requests.Response>): Response object received from the Frappe server
 
         """
-        response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params)
+        if headers:
+            headers.update(self.headers)
+
+        response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params, headers=headers)
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params)
+                response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params, headers=headers)
 
         processed_response = self._process_response(response)
         return processed_response
 
-    def post(self, method, data=None, json=None):
+    def post(self, method, data=None, json=None, headers=None):
         """
         Wrapper around POST API requests. Handles the 1st 403 response
         internally
@@ -126,15 +130,18 @@ class FrappeRequest(object):
             response (<requests.Response>): Response object received from the Frappe server
 
         """
+        if headers:
+            headers.update(self.headers)
+
         response = self.frappe_session.post(
-            self.url +"/api/method/" + method + "/", data=data, json=json,
+            self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers)
         )
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
                 response = self.frappe_session.post(
-                    self.url +"/api/method/" + method + "/", data=data, json=json,
+                    self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers)
                 )
 
         processed_response = self._process_response(response)
@@ -142,7 +149,8 @@ class FrappeRequest(object):
 
     def get_doc(
             self, doctype, name="", filters=None,
-            fields=None, limit_page_length=None, limit_start=None, order_by=None
+            fields=None, limit_page_length=None, limit_start=None, order_by=None,
+            headers=None,
     ):
         """
         Wrapper around GET API for fetching doctype data.
@@ -171,12 +179,12 @@ class FrappeRequest(object):
         if order_by:
             params["order_by"] = order_by
 
-        response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params)
+        response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers)
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params)
+                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers))
 
         processed_response = self._process_response(response)
         return processed_response
