@@ -134,14 +134,14 @@ class FrappeRequest(object):
             headers.update(self.headers)
 
         response = self.frappe_session.post(
-            self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers)
+            self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers
         )
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
                 response = self.frappe_session.post(
-                    self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers)
+                    self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers
                 )
 
         processed_response = self._process_response(response)
@@ -184,7 +184,7 @@ class FrappeRequest(object):
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers))
+                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers)
 
         processed_response = self._process_response(response)
         return processed_response
