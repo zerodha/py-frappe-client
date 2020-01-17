@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from .frappe_exceptions import GeneralException, TokenException
+from .frappe_exceptions import GeneralException
 
 
 class FrappeRequest(object):
@@ -38,12 +38,10 @@ class FrappeRequest(object):
             self.set_session_token(session_data)
         else:
             login_response = self._login()
-            self.session_data =  self._get_cookie_data(login_response)
-
+            self.session_data = self._get_cookie_data(login_response)
 
     def _get_cookie_data(self, response):
         return response.cookies.get_dict()
-
 
     def _process_response(self, response):
         try:
@@ -51,7 +49,6 @@ class FrappeRequest(object):
         except ValueError:
             raise GeneralException("Unable to process non JSON response")
         return rjson
-
 
     def _login(self):
         """
@@ -61,11 +58,11 @@ class FrappeRequest(object):
             login_response: <Requests> object
         """
         login_response = self.frappe_session.post(
-            self.url, data={'cmd':'login','usr':self.usr, 'pwd':self.pwd}, headers=self.headers)
+            self.url, data={'cmd': 'login', 'usr': self.usr, 'pwd': self.pwd}, headers=self.headers)
 
         if login_response.status_code == 403:
             raise GeneralException("Invalid Session")
-        if login_response.status_code !=200:
+        if login_response.status_code != 200:
             raise GeneralException("An error with frappe response occurred")
         # If user provides a callback function, call the function with the
         # session data
@@ -73,7 +70,6 @@ class FrappeRequest(object):
             session_data = self._get_cookie_data(login_response)
             self.callback(session_data)
         return login_response
-
 
     def set_session_token(self, session_data):
         """
@@ -88,7 +84,6 @@ class FrappeRequest(object):
             cookiejar = requests.utils.cookiejar_from_dict(session_data)
         # Set the cookies for future requests made by `self.frappe_session` object
         self.frappe_session.cookies = cookiejar
-
 
     def get(self, method, params=None, headers=None):
         """
@@ -106,12 +101,12 @@ class FrappeRequest(object):
         if headers:
             headers.update(self.headers)
 
-        response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params, headers=headers)
+        response = self.frappe_session.get(self.url + "/api/method/" + method + "/", params=params, headers=headers)
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.get(self.url +"/api/method/" + method + "/", params=params, headers=headers)
+                response = self.frappe_session.get(self.url + "/api/method/" + method + "/", params=params, headers=headers)
 
         processed_response = self._process_response(response)
         return processed_response
@@ -134,14 +129,14 @@ class FrappeRequest(object):
             headers.update(self.headers)
 
         response = self.frappe_session.post(
-            self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers)
+            self.url + "/api/method/" + method + "/", data=data, json=json, headers=headers
         )
         if response.status_code == 403:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
                 response = self.frappe_session.post(
-                    self.url +"/api/method/" + method + "/", data=data, json=json, headers=headers)
+                    self.url + "/api/method/" + method + "/", data=data, json=json, headers=headers
                 )
 
         processed_response = self._process_response(response)
@@ -184,7 +179,7 @@ class FrappeRequest(object):
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
-                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers))
+                response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers)
 
         processed_response = self._process_response(response)
         return processed_response
