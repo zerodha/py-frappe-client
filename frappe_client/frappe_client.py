@@ -100,6 +100,8 @@ class FrappeRequest(object):
         """
         if headers:
             headers.update(self.headers)
+        else:
+            headers = self.headers
 
         response = self.frappe_session.get(self.url + "/api/method/" + method + "/", params=params, headers=headers)
         if response.status_code == 403:
@@ -127,6 +129,8 @@ class FrappeRequest(object):
         """
         if headers:
             headers.update(self.headers)
+        else:
+            headers = self.headers
 
         response = self.frappe_session.post(
             self.url + "/api/method/" + method + "/", data=data, json=json, headers=headers
@@ -162,6 +166,11 @@ class FrappeRequest(object):
         Returns:
             response (<requests.Response>): Response object received from the Frappe server
         """
+        if headers:
+            headers.update(self.headers)
+        else:
+            headers = self.headers
+
         params = {}
         if filters:
             params["filters"] = json.dumps(filters)
