@@ -21,3 +21,7 @@ class TokenException(FrappeResponseException):
 
     def __init__(self, message):
         super(TokenException, self).__init__(message, code=403)
+
+
+class MissingConfigException(Exception):
+    pass

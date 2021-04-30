@@ -1,8 +1,9 @@
 import json
+import atexit
 
 import requests
 
-from .frappe_exceptions import GeneralException
+from .frappe_exceptions import GeneralException, MissingConfigException
 
 
 class FrappeRequest(object):
@@ -13,17 +14,22 @@ class FrappeRequest(object):
             usr (str): Username to Frappe Login.
             pwd (str): Password to Frappe Login.
             session_data (dict): dict of session object cookie data.
+            api_key(str): Api key for token based auth.
+            api_secret(str): Api secret for token based auth.
             frappe_session (<requests.Session()>): Object representation
             callback (func): Callback function to handle session data
     """
 
-    def __init__(self, url, username, password, session_data=None, callback=None, headers=None):
+    def __init__(self,
+        url, username=None, password=None, session_data=None, api_key=None, api_secret=None, callback=None, headers=None):
         """
 
         Returns:
                 - <FrappeRequest> object initialized
         """
         self.frappe_session = requests.Session()
+        atexit.register(self.frappe_session.close)
+
         self.url = url
         self.usr = username
         self.pwd = password
@@ -34,11 +40,26 @@ class FrappeRequest(object):
         # If user provides `session_data` don't login again,
         # instead set the cookie data in requests.Session() object
         if session_data:
+            # Make sure user:pass exists for 403 relogins
+            if not all([self.usr, self.pwd]):
+                raise MissingConfigException("Missing user, password for session based auth.")
+
             self.session_data = session_data
             self.set_session_token(session_data)
-        else:
+        elif self.usr and self.pwd:
             login_response = self._login()
             self.session_data = self._get_cookie_data(login_response)
+        elif api_key and api_secret:
+            self.frappe_session.headers.update({"Authorization": "token {api_key}:{api_secret}".format(
+                api_key=api_key,
+                api_secret=api_secret
+            )})
+
+    @property
+    def is_legacy_auth(self):
+        if (self.usr and self.pwd) or self.session_data:
+            return True
+        return False
 
     def _get_cookie_data(self, response):
         return response.cookies.get_dict()
@@ -104,7 +125,7 @@ class FrappeRequest(object):
             headers = self.headers
 
         response = self.frappe_session.get(self.url + "/api/method/" + method + "/", params=params, headers=headers)
-        if response.status_code == 403:
+        if response.status_code == 403 and self.is_legacy_auth:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
@@ -135,7 +156,7 @@ class FrappeRequest(object):
         response = self.frappe_session.post(
             self.url + "/api/method/" + method + "/", data=data, json=json, headers=headers
         )
-        if response.status_code == 403:
+        if response.status_code == 403 and self.is_legacy_auth:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
@@ -184,7 +205,7 @@ class FrappeRequest(object):
             params["order_by"] = order_by
 
         response = self.frappe_session.get(self.url + "/api/resource/" + doctype + "/" + name, params=params, headers=headers)
-        if response.status_code == 403:
+        if response.status_code == 403 and self.is_legacy_auth:
             # For the 1st 403 response try logging again
             login_response = self._login()
             if login_response.status_code == 200:
