@@ -8,3 +8,4 @@ tags
 venv/
 env/
 dist/
+build/

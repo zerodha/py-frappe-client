@@ -6,6 +6,8 @@
 pip install py-frappe-client
 ```
 
+[View on PyPi](https://pypi.org/project/py-frappe-client/)
+
 ## Usage
 
 ### Initialize
