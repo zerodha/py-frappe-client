@@ -167,10 +167,89 @@ class FrappeRequest(object):
         processed_response = self._process_response(response)
         return processed_response
 
+    def get_paginated_doc(
+            self, doctype, filters=None,
+            fields=None, limit_page_length=100, limit_start=None, order_by=None,
+            headers=None
+    ):
+        """
+        Wrapper around GET API for fetching doctype data in a paginated fashion.
+
+        Args:
+            doctype (str): Doctype name
+            filters (dict): Dict containing filters
+            fields (list): Fields to return from the doctype
+            limit_page_length (int): Interger indicating the page length limit
+            limit_start (int): Integer indicating the page start
+            order_by (str): String indicating to order results by
+
+        Returns:
+            response (<requests.Response>): Response object received from the Frappe server
+        """
+        if headers:
+            headers.update(self.headers)
+        else:
+            headers = self.headers
+
+        start = limit_start if limit_start else 0
+        limit_page_length = 100 if limit_page_length == 0 else limit_page_length
+        params = {
+            "limit_start": str(start),
+            "limit_page_length": str(limit_page_length),
+        }
+        if filters:
+            params["filters"] = json.dumps(filters)
+        if fields:
+            params["fields"] = json.dumps(fields)
+        if order_by:
+            params["order_by"] = order_by
+
+        has = True
+        pages = 0
+        empty_response = {"data": []}
+        endpoint = "{url}/api/resource/{doctype}/".format(
+            url=self.url,
+            doctype=doctype,
+        )
+
+        while has:
+            response = self.frappe_session.get(endpoint, params=params, headers=headers)
+
+            # Previous iteration was the last page
+            if response.status_code == 404:
+                has = False
+                yield empty_response
+                return
+
+            if response.status_code == 403 and self.is_legacy_auth:
+                # For the 1st 403 response try logging again
+                login_response = self._login()
+                if login_response.status_code == 200:
+                    response = self.frappe_session.get(endpoint, params=params, headers=headers)
+
+            processed_response = self._process_response(response)
+            pages += 1
+
+            # No items.
+            if len(processed_response.get("data", [])) == 0:
+                yield empty_response
+                return
+            # List of items fetches has lesser items than the given page size. last page!
+            elif len(processed_response.get("data", [])) < limit_page_length:
+                yield processed_response
+                return
+
+            # Increment the offset.
+            if pages > 0:
+                start += limit_page_length
+                params["limit_start"] = start
+
+            yield processed_response
+
     def get_doc(
             self, doctype, name="", filters=None,
             fields=None, limit_page_length=None, limit_start=None, order_by=None,
-            headers=None,
+            headers=None, pagination=False
     ):
         """
         Wrapper around GET API for fetching doctype data.
@@ -187,6 +266,21 @@ class FrappeRequest(object):
         Returns:
             response (<requests.Response>): Response object received from the Frappe server
         """
+        # Cannot fetch paginated items for a single fetch
+        if name != "" and pagination:
+            pagination = False
+
+        # Use pagination API
+        if pagination:
+            return self.get_paginated_doc(doctype,
+                filters=filters,
+                fields=fields,
+                limit_page_length=limit_page_length,
+                limit_start=limit_start,
+                order_by=order_by,
+                headers=headers
+            )
+
         if headers:
             headers.update(self.headers)
         else:
